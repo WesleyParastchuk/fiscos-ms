@@ -1,0 +1,35 @@
+# Logs
+logs/
+*.log
+*.out
+*.err
+
+# Build outputs
+target/
+out/
+build/
+
+# Maven wrapper cache
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE and tooling metadata
+.idea/
+*.iml
+.project
+.classpath
+.settings/
+.vscode/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Java artifacts
+*.class
+
+# Environment files
+.env
+.env.*
+
+# Node artifacts
+node_modules/
