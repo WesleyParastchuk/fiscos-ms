@@ -1,0 +1,24 @@
+FROM eclipse-temurin:17-jdk AS development
+
+WORKDIR /opt/bootstrap/shared
+
+COPY shared/mvnw shared/mvnw.cmd ./
+COPY shared/.mvn .mvn
+COPY shared/pom.xml pom.xml
+COPY shared/src src
+
+RUN chmod +x mvnw \
+    && ./mvnw install -DskipTests
+
+WORKDIR /opt/bootstrap/category
+
+COPY category/mvnw category/mvnw.cmd ./
+COPY category/.mvn .mvn
+COPY category/pom.xml pom.xml
+
+RUN chmod +x mvnw \
+    && ./mvnw dependency:go-offline
+
+WORKDIR /workspace
+
+CMD ["sh", "-c", "./mvnw spring-boot:run -Dspring-boot.run.profiles=${SPRING_PROFILES_ACTIVE:-dev}"]
