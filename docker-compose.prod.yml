@@ -1,0 +1,252 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: fiscos-rabbitmq
+    env_file:
+      - ./.env
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT}:15672"
+    networks:
+      - fiscos-net
+
+  auth-mongo:
+    image: mongo:7.0
+    container_name: fiscos-auth-mongo
+    env_file:
+      - ./.env
+    environment:
+      MONGO_INITDB_DATABASE: ${AUTH_MONGO_DATABASE}
+    volumes:
+      - auth-mongo-data:/data/db
+    networks:
+      - fiscos-net
+
+  auth-redis:
+    image: redis:7.2
+    container_name: fiscos-auth-redis
+    env_file:
+      - ./.env
+    command: ["sh", "-c", "redis-server --save '' --appendonly no"]
+    volumes:
+      - auth-redis-data:/data
+    networks:
+      - fiscos-net
+
+  postgres:
+    image: postgres:16
+    container_name: fiscos-postgres
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_SUPERUSER}
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./backend/infra/database/init:/docker-entrypoint-initdb.d
+    networks:
+      - fiscos-net
+
+  auth-service:
+    build:
+      context: ./backend
+      dockerfile: auth/docker/Dockerfile.prod
+    image: fiscos/auth-service:latest
+    container_name: fiscos-auth-service
+    env_file:
+      - ./.env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${AUTH_SPRING_PROFILE:-prod}
+      SPRING_APPLICATION_NAME: auth
+      SERVER_PORT: ${AUTH_PORT}
+      SPRING_DATA_MONGODB_URI: ${AUTH_MONGODB_URI}
+      SPRING_DATA_REDIS_HOST: ${AUTH_REDIS_HOST}
+      SPRING_DATA_REDIS_PORT: ${AUTH_REDIS_PORT}
+      SPRING_DATA_REDIS_USERNAME: ${AUTH_REDIS_USERNAME}
+      SPRING_DATA_REDIS_PASSWORD: ${AUTH_REDIS_PASSWORD}
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_HOST}
+      SPRING_RABBITMQ_PORT: ${RABBITMQ_PORT}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      SPRING_RABBITMQ_VIRTUAL_HOST: ${RABBITMQ_VHOST}
+    ports:
+      - "${AUTH_PORT}:${AUTH_PORT}"
+    depends_on:
+      - auth-mongo
+      - auth-redis
+      - rabbitmq
+    networks:
+      - fiscos-net
+    restart: unless-stopped
+
+  category-service:
+    build:
+      context: ./backend
+      dockerfile: category/docker/Dockerfile.prod
+    image: fiscos/category-service:latest
+    container_name: fiscos-category-service
+    env_file:
+      - ./.env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${CATEGORY_SPRING_PROFILE:-prod}
+      SPRING_APPLICATION_NAME: category
+      SERVER_PORT: ${CATEGORY_PORT}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${CATEGORY_DB_HOST}:${CATEGORY_DB_PORT}/${CATEGORY_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${CATEGORY_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${CATEGORY_DB_PASSWORD}
+      SPRING_DATASOURCE_MAX_POOL_SIZE: ${CATEGORY_DB_MAX_POOL_SIZE}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${CATEGORY_JPA_DDL_AUTO}
+      SPRING_JPA_SHOW_SQL: ${CATEGORY_JPA_SHOW_SQL}
+      SPRING_JPA_DATABASE_PLATFORM: ${CATEGORY_JPA_PLATFORM}
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_HOST}
+      SPRING_RABBITMQ_PORT: ${RABBITMQ_PORT}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      SPRING_RABBITMQ_VIRTUAL_HOST: ${RABBITMQ_VHOST}
+    ports:
+      - "${CATEGORY_PORT}:${CATEGORY_PORT}"
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - fiscos-net
+    restart: unless-stopped
+
+  invoice-service:
+    build:
+      context: ./backend
+      dockerfile: invoice/docker/Dockerfile.prod
+    image: fiscos/invoice-service:latest
+    container_name: fiscos-invoice-service
+    env_file:
+      - ./.env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${INVOICE_SPRING_PROFILE:-prod}
+      SPRING_APPLICATION_NAME: invoice
+      SERVER_PORT: ${INVOICE_PORT}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${INVOICE_DB_HOST}:${INVOICE_DB_PORT}/${INVOICE_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${INVOICE_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${INVOICE_DB_PASSWORD}
+      SPRING_DATASOURCE_MAX_POOL_SIZE: ${INVOICE_DB_MAX_POOL_SIZE}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${INVOICE_JPA_DDL_AUTO}
+      SPRING_JPA_SHOW_SQL: ${INVOICE_JPA_SHOW_SQL}
+      SPRING_JPA_DATABASE_PLATFORM: ${INVOICE_JPA_PLATFORM}
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_HOST}
+      SPRING_RABBITMQ_PORT: ${RABBITMQ_PORT}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      SPRING_RABBITMQ_VIRTUAL_HOST: ${RABBITMQ_VHOST}
+    ports:
+      - "${INVOICE_PORT}:${INVOICE_PORT}"
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - fiscos-net
+    restart: unless-stopped
+
+  product-service:
+    build:
+      context: ./backend
+      dockerfile: product/docker/Dockerfile.prod
+    image: fiscos/product-service:latest
+    container_name: fiscos-product-service
+    env_file:
+      - ./.env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${PRODUCT_SPRING_PROFILE:-prod}
+      SPRING_APPLICATION_NAME: product
+      SERVER_PORT: ${PRODUCT_PORT}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${PRODUCT_DB_HOST}:${PRODUCT_DB_PORT}/${PRODUCT_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${PRODUCT_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${PRODUCT_DB_PASSWORD}
+      SPRING_DATASOURCE_MAX_POOL_SIZE: ${PRODUCT_DB_MAX_POOL_SIZE}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${PRODUCT_JPA_DDL_AUTO}
+      SPRING_JPA_SHOW_SQL: ${PRODUCT_JPA_SHOW_SQL}
+      SPRING_JPA_DATABASE_PLATFORM: ${PRODUCT_JPA_PLATFORM}
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_HOST}
+      SPRING_RABBITMQ_PORT: ${RABBITMQ_PORT}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      SPRING_RABBITMQ_VIRTUAL_HOST: ${RABBITMQ_VHOST}
+    ports:
+      - "${PRODUCT_PORT}:${PRODUCT_PORT}"
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - fiscos-net
+    restart: unless-stopped
+
+  saga-service:
+    build:
+      context: ./backend
+      dockerfile: saga/docker/Dockerfile.prod
+    image: fiscos/saga-service:latest
+    container_name: fiscos-saga-service
+    env_file:
+      - ./.env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SAGA_SPRING_PROFILE:-prod}
+      SPRING_APPLICATION_NAME: saga
+      SERVER_PORT: ${SAGA_PORT}
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_HOST}
+      SPRING_RABBITMQ_PORT: ${RABBITMQ_PORT}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      SPRING_RABBITMQ_VIRTUAL_HOST: ${RABBITMQ_VHOST}
+    ports:
+      - "${SAGA_PORT}:${SAGA_PORT}"
+    depends_on:
+      - rabbitmq
+    networks:
+      - fiscos-net
+    restart: unless-stopped
+
+  user-service:
+    build:
+      context: ./backend
+      dockerfile: user/docker/Dockerfile.prod
+    image: fiscos/user-service:latest
+    container_name: fiscos-user-service
+    env_file:
+      - ./.env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${USER_SPRING_PROFILE:-prod}
+      SPRING_APPLICATION_NAME: user
+      SERVER_PORT: ${USER_PORT}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${USER_DB_HOST}:${USER_DB_PORT}/${USER_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${USER_DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${USER_DB_PASSWORD}
+      SPRING_DATASOURCE_MAX_POOL_SIZE: ${USER_DB_MAX_POOL_SIZE}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${USER_JPA_DDL_AUTO}
+      SPRING_JPA_SHOW_SQL: ${USER_JPA_SHOW_SQL}
+      SPRING_JPA_DATABASE_PLATFORM: ${USER_JPA_PLATFORM}
+      SPRING_RABBITMQ_HOST: ${RABBITMQ_HOST}
+      SPRING_RABBITMQ_PORT: ${RABBITMQ_PORT}
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_DEFAULT_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_DEFAULT_PASS}
+      SPRING_RABBITMQ_VIRTUAL_HOST: ${RABBITMQ_VHOST}
+    ports:
+      - "${USER_PORT}:${USER_PORT}"
+    depends_on:
+      - postgres
+      - rabbitmq
+    networks:
+      - fiscos-net
+    restart: unless-stopped
+
+networks:
+  fiscos-net:
+    driver: bridge
+
+volumes:
+  auth-mongo-data:
+  auth-redis-data:
+  postgres-data:

@@ -29,7 +29,7 @@ Thumbs.db
 
 # Environment files
 .env
-.env.*
+!.env.example
 
 # Node artifacts
 node_modules/
