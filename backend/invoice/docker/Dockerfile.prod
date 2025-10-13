@@ -1,0 +1,32 @@
+FROM eclipse-temurin:17-jdk AS builder
+
+WORKDIR /opt/bootstrap/shared
+
+COPY shared/mvnw shared/mvnw.cmd ./
+COPY shared/.mvn .mvn
+COPY shared/pom.xml pom.xml
+COPY shared/src src
+
+RUN chmod +x mvnw \
+    && ./mvnw install -DskipTests
+
+WORKDIR /opt/bootstrap/invoice
+
+COPY invoice/mvnw invoice/mvnw.cmd ./
+COPY invoice/.mvn .mvn
+COPY invoice/pom.xml pom.xml
+COPY invoice/src src
+
+RUN chmod +x mvnw \
+    && ./mvnw -DskipTests clean package \
+    && cp $(ls target/*.jar | grep -v original | head -n 1) /opt/bootstrap/app.jar
+
+FROM eclipse-temurin:17-jre AS runner
+
+WORKDIR /app
+
+COPY --from=builder /opt/bootstrap/app.jar app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS:-} -jar app.jar"]
