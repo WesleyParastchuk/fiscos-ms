@@ -2,6 +2,7 @@ package com.fiscos.user.application.usecase;
 
 import com.fiscos.user.domain.entity.Auth;
 import com.fiscos.user.domain.entity.User;
+import com.fiscos.user.domain.exception.EmailAlreadyRegisteredException;
 import com.fiscos.user.domain.repository.UserRepository;
 import com.fiscos.user.domain.service.PasswordPolicyService;
 import com.fiscos.user.domain.valueobject.Email;
@@ -25,7 +26,7 @@ public class RegisterUserUseCase {
         Email email = new Email(emailStr);
 
         userRepository.findByEmail(email).ifPresent(existing -> {
-            throw new IllegalArgumentException("E-mail já cadastrado: " + email.getValue());
+            throw new EmailAlreadyRegisteredException(emailStr);
         });
 
         String passwordHash = passwordHasher.hash(plainPassword);
