@@ -1,8 +1,5 @@
 package com.fiscos.user.domain.service;
 
-import org.springframework.stereotype.Service;
-
-@Service
 public class PasswordPolicyService {
 
     public static final int MIN_PASSWORD_LENGTH = 8;
