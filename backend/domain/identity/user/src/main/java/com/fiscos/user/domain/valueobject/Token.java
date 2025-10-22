@@ -1,7 +1,10 @@
 package com.fiscos.user.domain.valueobject;
 
+import lombok.Getter;
+
 import java.time.Instant;
 
+@Getter
 public class Token {
     private final String value;
     private final Instant expiration;
@@ -11,18 +14,6 @@ public class Token {
         this.value = value;
         this.expiration = expiration;
         this.payload = payload;
-    }
-
-    public String getValue() {
-        return value;
-    }
-
-    public Instant getExpiration() {
-        return expiration;
-    }
-
-    public TokenPayload getPayload() {
-        return payload;
     }
 
     public boolean isExpired() {

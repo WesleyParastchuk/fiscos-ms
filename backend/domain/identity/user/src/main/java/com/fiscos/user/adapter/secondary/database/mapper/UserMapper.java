@@ -21,14 +21,12 @@ public class UserMapper {
     }
 
     public static User toDomain(UserJpaEntity userJpaEntity) {
-        User user = new User(
+        return new User(
                 UUID.fromString(userJpaEntity.getId()),
                 userJpaEntity.getName(),
                 AuthMapper.toDomain(userJpaEntity.getAuth()),
                 userJpaEntity.isActive(),
                 userJpaEntity.getCreatedAt()
         );
-
-        return user;
     }
 }

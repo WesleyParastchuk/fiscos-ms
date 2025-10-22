@@ -26,8 +26,4 @@ public class ErrorResponse {
         this.message = message;
         this.path = path;
     }
-
-    public int getStatusCode() {
-        return this.status.value();
-    }
 }

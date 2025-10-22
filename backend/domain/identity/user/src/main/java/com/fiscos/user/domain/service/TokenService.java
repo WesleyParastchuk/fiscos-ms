@@ -5,5 +5,5 @@ import com.fiscos.user.domain.valueobject.TokenPayload;
 
 public interface TokenService {
     Token generateToken(TokenPayload payload);
-     TokenPayload validateToken(String tokenStr);
+    TokenPayload validateToken(String tokenStr);
 }
