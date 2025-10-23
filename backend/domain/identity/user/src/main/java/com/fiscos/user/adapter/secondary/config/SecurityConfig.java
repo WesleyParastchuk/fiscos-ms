@@ -1,26 +1,51 @@
 package com.fiscos.user.adapter.secondary.config;
 
+import com.fiscos.user.adapter.primary.http.security.Http401UnauthorizedEntryPoint;
+import com.fiscos.user.adapter.primary.http.security.JwtAuthFilter;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
+@EnableMethodSecurity
 public class SecurityConfig {
+
+    private final JwtAuthFilter jwtAuthFilter;
+    private final Http401UnauthorizedEntryPoint unauthorizedEntryPoint;
+
+    public SecurityConfig(JwtAuthFilter jwtAuthFilter, Http401UnauthorizedEntryPoint unauthorizedEntryPoint) {
+        this.jwtAuthFilter = jwtAuthFilter;
+        this.unauthorizedEntryPoint = unauthorizedEntryPoint;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Desativa completamente segurança HTTP
-                .csrf(csrf -> csrf.disable())
-                .cors(cors -> cors.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll()
+                .csrf(AbstractHttpConfigurer::disable)
+
+                .exceptionHandling(ex ->
+                        ex.authenticationEntryPoint(unauthorizedEntryPoint)
                 )
-                // Remove autenticação de sessão
-                .httpBasic(httpBasic -> httpBasic.disable())
-                .formLogin(form -> form.disable())
-                .logout(logout -> logout.disable());
+
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/users/register", "/auth/login").anonymous()
+                        .anyRequest().authenticated()
+                )
+
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable);
 
         return http.build();
     }

@@ -1,5 +1,6 @@
 package com.fiscos.user.adapter.primary.http.controller;
 
+import com.fiscos.user.adapter.primary.http.security.IsAnonymous;
 import com.fiscos.user.application.usecase.register_user.RegisterUserInputDTO;
 import com.fiscos.user.application.dto.AuthOutputDTO;
 import com.fiscos.user.application.usecase.register_user.RegisterUserUseCase;
@@ -25,6 +26,7 @@ class UserController {
     }
 
     @PostMapping("/register")
+    @IsAnonymous
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterUserRequest request) {
         RegisterUserInputDTO input = UserMapper.toInputDTO(request);
         AuthOutputDTO output = registerUserUseCase.execute(input);

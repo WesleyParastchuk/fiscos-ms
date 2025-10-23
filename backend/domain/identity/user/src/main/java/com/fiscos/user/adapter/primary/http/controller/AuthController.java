@@ -3,6 +3,8 @@ package com.fiscos.user.adapter.primary.http.controller;
 import com.fiscos.user.adapter.primary.http.dto.auth.AuthRequest;
 import com.fiscos.user.adapter.primary.http.dto.auth.AuthResponse;
 import com.fiscos.user.adapter.primary.http.mapper.AuthMapper;
+import com.fiscos.user.adapter.primary.http.security.IsAnonymous;
+import com.fiscos.user.adapter.primary.http.security.IsAuthenticated;
 import com.fiscos.user.adapter.primary.http.service.AuthCookieService;
 import com.fiscos.user.application.dto.AuthInputDTO;
 import com.fiscos.user.application.dto.AuthOutputDTO;
@@ -28,6 +30,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @IsAnonymous
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
         AuthInputDTO input = AuthMapper.toInput(request);
         AuthOutputDTO output = autenticateUserUseCase.execute(input);
@@ -39,6 +42,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @IsAuthenticated
     public ResponseEntity<Void> logout() {
         ResponseCookie cookie = authCookieService.createLogoutCookie();
         return ResponseEntity.ok().
