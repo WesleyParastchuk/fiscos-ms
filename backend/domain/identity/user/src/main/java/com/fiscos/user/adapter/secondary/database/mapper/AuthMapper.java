@@ -8,13 +8,15 @@ public class AuthMapper {
         AuthJpaEntity authJpaEntity = new AuthJpaEntity();
         authJpaEntity.setEmail(EmailMapper.toEntity(auth.getEmail()));
         authJpaEntity.setPasswordHash(auth.getPasswordHash());
+        authJpaEntity.setRole(auth.getRole());
         return authJpaEntity;
     }
 
     public static Auth toDomain(AuthJpaEntity authJpaEntity) {
         return new Auth(
                 EmailMapper.toDomain(authJpaEntity.getEmail()),
-                authJpaEntity.getPasswordHash()
+                authJpaEntity.getPasswordHash(),
+                authJpaEntity.getRole()
         );
     }
 }

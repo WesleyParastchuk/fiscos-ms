@@ -6,10 +6,12 @@ import com.fiscos.user.domain.service.PasswordService;
 import com.fiscos.user.adapter.secondary.service.BcryptAdapter;
 import com.fiscos.user.domain.service.TokenService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@EnableConfigurationProperties(JwtProperties.class)
 public class AdapterConfig {
 
     @Bean
@@ -23,11 +25,11 @@ public class AdapterConfig {
     }
 
     @Bean
-    public TokenService tokenService(
-            @Value("${fiscos.security.jwt.secret}") String secret,
-            @Value("${fiscos.security.jwt.expiration-ms}") long expiration
-    ) {
-        return new JwtTokenAdapter(secret, expiration);
+    public TokenService tokenService(JwtProperties jwtProperties) {
+        return new JwtTokenAdapter(
+            jwtProperties.secret(),
+            jwtProperties.expirationMs()
+        );
     }
 }
 

@@ -10,6 +10,7 @@ public class AuthMapper {
                 user.getId().toString(),
                 user.getName(),
                 user.getAuth().getEmail().getValue(),
+                user.getAuth().getRole(),
                 token.getValue()
         );
     }

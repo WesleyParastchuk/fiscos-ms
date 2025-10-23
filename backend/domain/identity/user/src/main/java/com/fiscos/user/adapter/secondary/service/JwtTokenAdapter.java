@@ -1,6 +1,7 @@
 package com.fiscos.user.adapter.secondary.service;
 
 import com.fiscos.user.domain.service.TokenService;
+import com.fiscos.user.domain.valueobject.Role;
 import com.fiscos.user.domain.valueobject.Token;
 import com.fiscos.user.domain.valueobject.TokenPayload;
 import com.fiscos.user.domain.exception.InvalidTokenException;
@@ -32,6 +33,7 @@ public class JwtTokenAdapter implements TokenService {
 
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", payload.getUserId());
+        claims.put("role", payload.getRole());
 
         String tokenString = Jwts.builder()
                 .setClaims(claims)
@@ -54,7 +56,8 @@ public class JwtTokenAdapter implements TokenService {
                     .getBody();
 
             return new TokenPayload(
-                    claims.getSubject()
+                    claims.getSubject(),
+                    Role.fromString(claims.get("role", String.class))
             );
 
         } catch (SignatureException | MalformedJwtException | UnsupportedJwtException | IllegalArgumentException ex) {

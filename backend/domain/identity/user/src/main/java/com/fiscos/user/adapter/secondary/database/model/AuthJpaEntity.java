@@ -1,7 +1,7 @@
 package com.fiscos.user.adapter.secondary.database.model;
 
-import jakarta.persistence.Embeddable;
-import jakarta.persistence.Embedded;
+import com.fiscos.user.domain.valueobject.Role;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +18,10 @@ public class AuthJpaEntity {
     private EmailJpaEntity email;
 
     private String passwordHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false)
+    private Role role;
 
 }
 

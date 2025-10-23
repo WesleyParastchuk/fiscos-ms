@@ -35,7 +35,7 @@ public class AutenticateUserUseCase {
             throw new IllegalArgumentException("Invalid password");
         }
 
-        TokenPayload payload = new TokenPayload(user.getId().toString());
+        TokenPayload payload = new TokenPayload(user.getId().toString(), user.getAuth().getRole());
         Token token = tokenService.generateToken(payload);
 
         return AuthMapper.toOutput(user, token);

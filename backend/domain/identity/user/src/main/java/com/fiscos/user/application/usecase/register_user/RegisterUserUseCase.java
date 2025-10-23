@@ -10,6 +10,7 @@ import com.fiscos.user.domain.service.PasswordService;
 import com.fiscos.user.domain.service.PasswordPolicyService;
 import com.fiscos.user.domain.service.TokenService;
 import com.fiscos.user.domain.valueobject.Email;
+import com.fiscos.user.domain.valueobject.Role;
 import com.fiscos.user.domain.valueobject.Token;
 import com.fiscos.user.domain.valueobject.TokenPayload;
 
@@ -37,11 +38,11 @@ public class RegisterUserUseCase {
 
         String passwordHash = passwordService.hash(input.getPlainPassword());
 
-        Auth auth = new Auth(email, passwordHash);
+        Auth auth = new Auth(email, passwordHash, Role.defaultRole());
         User user = new User(input.getName(), auth);
         userRepository.save(user);
 
-        TokenPayload payload = new TokenPayload(user.getId().toString());
+        TokenPayload payload = new TokenPayload(user.getId().toString(), user.getAuth().getRole());
         Token token = tokenService.generateToken(payload);
 
         return AuthMapper.toOutput(user, token);

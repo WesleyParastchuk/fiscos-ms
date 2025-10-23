@@ -11,6 +11,7 @@ public class AuthMapper {
                 output.getUserId(),
                 output.getName(),
                 output.getEmail(),
+                output.getRole().toString(),
                 output.getToken()
         );
     }
